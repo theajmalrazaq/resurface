@@ -21,7 +21,9 @@ Most legacy systems (university portals, internal corporate tools, government si
 - 🕶️ **Exclusive Stealth Crawling via Obscura:** Uses [Obscura](https://github.com/h4ckf0r0day/obscura) to bypass anti-bot detections, capture authenticated DOM trees, and catalog routes.
 - 🗺️ **Recursive Whole-Site Graph Mapping:** Recursively crawls navbar dropdowns, sidebar accordions, secondary/tertiary tabs, and sub-pages to build a complete `audit/site-graph.json` before writing a single line of UI code.
 - 🛑 **Interactive Human-in-the-Loop Auth Gate:** Safely pauses for human CAPTCHA solving (Turnstile, reCAPTCHA, hCaptcha) or 2FA without attempting illegal bypasses.
-- ⚡ **Zero-FOUC (Flash of Unstyled Content) Guarantee:** Enforces 5-layer anti-FOUC pre-paint suppression, loading skeletons, and legacy stylesheet removal.
+- ⚡ **Zero-FOUC (Flash of Unstyled Content) Guarantee:** Enforces 7-stage anti-FOUC pre-paint suppression, loading skeletons, legacy stylesheet removal, high-res favicon replacement, and zero-flash dark/light mode.
+- 🖼️ **Dynamic High-Res Favicon Injection:** Replaces legacy 16x16 blurred `.ico` files with crisp vector / PNG branding before first paint.
+- 🌗 **Zero-Flash Adaptive Theme Engine:** Pre-paint synchronous `dark` class mounting, Tailwind v4 CSS variables, and persistent Zustand state (`light`, `dark`, `system`).
 - 🧩 **Resilient Semantic Parsers:** Extracts tables, forms, and alerts using header-anchored semantic lookups validated with Zod schemas.
 - 🔄 **Form Action Proxying:** Synchronizes modern inputs to hidden legacy forms so CSRF tokens (`__RequestVerificationToken`, `__VIEWSTATE`) and native cookies pass naturally.
 - 🎨 **Modern Design System:** Elevated typography, responsive layout, dark/light theme engine, and accessible components.

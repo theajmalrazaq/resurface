@@ -214,6 +214,93 @@ The legacy DOM must remain alive and accessible in the background so:
 - Semantic data parsers can query tables, transcript data, and profile info anytime.
 - Hidden CSRF tokens (`__RequestVerificationToken`, session cookies, ASP.NET ViewStates) remain available for programmatic form submits.
 
+#### 6. Dynamic Favicon Interception & High-Res Replacement
+Legacy sites almost always feature low-resolution (16x16 .ico) or missing favicons. Inject and replace the favicon immediately at `document_start` so the browser tab icon updates before page paint:
+```typescript
+export function replaceFavicon(iconPath = "icon.svg") {
+  const iconUrl = browser.runtime.getURL(iconPath);
+  let favicon = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+  if (!favicon) {
+    favicon = document.createElement("link");
+    favicon.rel = "icon";
+    document.head.appendChild(favicon);
+  }
+  favicon.type = iconPath.endsWith(".svg") ? "image/svg+xml" : "image/png";
+  favicon.href = iconUrl;
+}
+```
+*(Ensure `icon.svg` and PNG icons are declared in `web_accessible_resources` in `wxt.config.ts` so the host page is permitted to load them).*
+
+#### 7. Zero-Flash Adaptive Theme Engine (Light / Dark Mode)
+A white flash in dark mode is as jarring as FOUC. The theme class (`dark`) must be determined and attached to `document.documentElement` synchronously **before React renders**:
+
+1. **Pre-Paint Synchronous Theme Application:**
+```typescript
+export type ThemeMode = "light" | "dark" | "system";
+
+export function getResolvedTheme(mode: ThemeMode): "light" | "dark" {
+  if (mode === "system") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  return mode;
+}
+
+export function initThemePrePaint() {
+  const saved = (localStorage.getItem("resurface-theme") as ThemeMode) || "system";
+  const resolved = getResolvedTheme(saved);
+  document.documentElement.classList.toggle("dark", resolved === "dark");
+}
+```
+
+2. **Tailwind v4 Theme Tokens (`src/styles/tailwind.css`):**
+```css
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-surface: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --border-card: #e2e8f0;
+  }
+
+  .dark {
+    --bg-surface: #0b0f17;
+    --bg-card: #131b2e;
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-card: #1e293b;
+  }
+}
+```
+
+3. **Persistent Theme Store (`src/stores/themeStore.ts`):**
+```typescript
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+interface ThemeState {
+  mode: ThemeMode;
+  setMode: (mode: ThemeMode) => void;
+}
+
+export const useThemeStore = create<ThemeState>()(
+  persist(
+    (set) => ({
+      mode: "system",
+      setMode: (mode) => {
+        set({ mode });
+        localStorage.setItem("resurface-theme", mode);
+        const resolved = getResolvedTheme(mode);
+        document.documentElement.classList.toggle("dark", resolved === "dark");
+      },
+    }),
+    { name: "resurface-theme-store" }
+  )
+);
+```
+
 ---
 
 ### Phase 4: Battle-Tested Toolchain & Pinned Dependencies
@@ -292,6 +379,18 @@ export default defineConfig({
       128: "icon-128.png",
     },
     host_permissions: ["https://<TARGET_DOMAIN>/*"],
+    web_accessible_resources: [
+      {
+        resources: [
+          "icon.svg",
+          "icon-16.png",
+          "icon-32.png",
+          "icon-48.png",
+          "icon-128.png",
+        ],
+        matches: ["<all_urls>"],
+      },
+    ],
   },
 });
 ```
@@ -328,25 +427,33 @@ Use this standardized, robust pattern in `src/entrypoints/content.tsx`:
 import { defineContentScript } from "wxt/utils/define-content-script";
 import { createRoot } from "react-dom/client";
 import { App } from "../components/App";
+import { replaceFavicon } from "../utils/favicon";
+import { initThemePrePaint } from "../utils/theme";
 import "../styles/tailwind.css";
 
 export default defineContentScript({
   matches: ["https://<TARGET_DOMAIN>/*"],
   main() {
-    // 1. Anti-FOUC Gate: Pre-paint Skeleton
+    // 1. Synchronous Pre-Paint Theme & Favicon Injection
+    initThemePrePaint();
+    replaceFavicon("icon.svg");
+
+    // 2. Anti-FOUC Gate: Theme-aware Pre-paint Skeleton
+    const isDark = document.documentElement.classList.contains("dark");
     const skeleton = document.createElement("div");
     skeleton.id = "app-skeleton";
+    skeleton.style.cssText = "position: fixed; inset: 0; z-index: 999999; background: " + (isDark ? "#0b0f17" : "#f8fafc") + ";";
     skeleton.innerHTML = `
-      <div style="height: 64px; background: #fff; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; padding: 0 24px;">
-        <div style="width: 120px; height: 24px; background: #e2e8f0; border-radius: 6px;"></div>
+      <div style="height: 64px; background: ${isDark ? "#131b2e" : "#ffffff"}; border-bottom: 1px solid ${isDark ? "#1e293b" : "#e2e8f0"}; display: flex; align-items: center; padding: 0 24px;">
+        <div style="width: 120px; height: 24px; background: ${isDark ? "#1e293b" : "#e2e8f0"}; border-radius: 6px;"></div>
       </div>
       <div style="max-width: 1200px; margin: 32px auto; padding: 0 24px;">
-        <div style="height: 380px; background: #fff; border-radius: 16px; border: 1px solid #e2e8f0;"></div>
+        <div style="height: 380px; background: ${isDark ? "#131b2e" : "#ffffff"}; border-radius: 16px; border: 1px solid ${isDark ? "#1e293b" : "#e2e8f0"};"></div>
       </div>
     `;
     document.documentElement.appendChild(skeleton);
 
-    // 2. Dynamic Legacy Stylesheet Stripper
+    // 3. Dynamic Legacy Stylesheet Stripper
     const stripLegacyCss = () => {
       document.querySelectorAll<HTMLLinkElement>(
         'link[href*="template.css"], link[href*="system.css"], link[href*="general.css"]'
@@ -355,7 +462,7 @@ export default defineContentScript({
     stripLegacyCss();
     document.addEventListener("DOMContentLoaded", stripLegacyCss);
 
-    // 3. React Mount Handler
+    // 4. React Mount Handler
     const onReady = () => {
       let rootContainer = document.getElementById("modern-app-root");
       if (!rootContainer) {
@@ -467,6 +574,8 @@ export function proxyLegacyFormSubmit(formSelector: string, fieldValues: Record<
 
 - [ ] **Stealth Verification:** Target crawled via two-tier strategy (lightweight probe or Obscura) with clean cookie capture.
 - [ ] **Zero FOUC:** No visual glitch or flash of the legacy page on fast or slow refresh.
+- [ ] **Favicon Intercepted:** Modern vector / high-res icon replaces the legacy 16px .ico on tab mount.
+- [ ] **Zero-Flash Theme Engine:** Light / Dark mode persists with synchronous pre-paint class application; zero white-flash on reload.
 - [ ] **Pinned Toolchain:** Extension built using pinned `vite@^6.4.5`, `@tailwindcss/postcss`, and `wxt@^0.21.5` without virtual entrypoint collisions.
 - [ ] **Asset Completeness:** PNG icons (16, 32, 48, 128px) generated and referenced in `wxt.config.ts`.
 - [ ] **Data Integrity:** 100% of data values match the legacy portal (verified with snapshot unit tests in Vitest).
