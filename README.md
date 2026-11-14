@@ -38,13 +38,37 @@ Most legacy systems (university portals, internal corporate tools, government si
 # skills.sh — Vercel skills CLI (Claude Code, Codex, Cursor, and 40+ agents)
 npx skills add theajmalrazaq/resurface
 
+# Install globally instead of per-project
+npx skills add theajmalrazaq/resurface -g -y
+
+# GitHub CLI (validates against the Agent Skills spec)
+gh skill install theajmalrazaq/resurface
+
+# Pin the exact v1.0.0 release
+gh skill install theajmalrazaq/resurface resurface --pin v1.0.0
+
+# Preview the skill before installing
+gh skill preview theajmalrazaq/resurface resurface
+
 # Claude Code plugin marketplace
 /plugin marketplace add theajmalrazaq/resurface
 /plugin install resurface@resurface
 
 # ClawHub (OpenClaw registry)
 npx clawhub install resurface
+# or, inside OpenClaw:
+openclaw skills install resurface
+
+# Update later
+gh skill update --all
+npx skills add theajmalrazaq/resurface
 ```
+
+**Published on:**
+- [skills.sh](https://skills.sh/theajmalrazaq/resurface/resurface) — install with `npx skills add theajmalrazaq/resurface`
+- [GitHub Releases](https://github.com/theajmalrazaq/resurface/releases/tag/v1.0.0) — `v1.0.0`, install with `gh skill install theajmalrazaq/resurface`
+- Agensi — free listing (in review)
+- SkillsMP and ClaudeSkills — auto-indexed from this public repo
 
 ### 1. Google Antigravity & Gemini CLI
 The skill lives in `skills/resurface/` inside this repo. Clone and copy it into your user skills directory:
