@@ -1,4 +1,4 @@
-# Legacy Website Modernizer (Agent Skill)
+# Resurface (Agent Skill)
 
 > **Universal AI Agent Skill:** Transform ANY clunky, outdated, or frustrating legacy website, portal, or ERP into a 2026-grade modern application using a client-side Chrome Extension overlay.
 
@@ -33,7 +33,7 @@ Most legacy systems (university portals, internal corporate tools, government si
 ### 1. Google Antigravity & Gemini CLI
 Clone or symlink into your user skills directory:
 ```bash
-git clone https://github.com/theajmalrazaq/legacy-website-modernizer.git ~/.gemini/config/skills/legacy-website-modernizer
+git clone https://github.com/theajmalrazaq/resurface.git ~/.gemini/config/skills/resurface
 ```
 Antigravity automatically registers the skill upon start.
 
@@ -42,11 +42,11 @@ Symlink into your global or project Claude skills directory:
 ```bash
 # Global installation for all Claude Code sessions:
 mkdir -p ~/.claude/skills
-ln -s /path/to/legacy-website-modernizer ~/.claude/skills/legacy-website-modernizer
+ln -s /path/to/resurface ~/.claude/skills/resurface
 
 # Or project-level:
 mkdir -p .claude/skills
-cp /path/to/legacy-website-modernizer/SKILL.md .claude/skills/SKILL.md
+cp /path/to/resurface/SKILL.md .claude/skills/SKILL.md
 ```
 
 ### 3. Cursor & Windsurf
@@ -54,14 +54,14 @@ Add as a project rule or cursor rule:
 ```bash
 # Cursor
 mkdir -p .cursor/rules
-cp /path/to/legacy-website-modernizer/SKILL.md .cursor/rules/legacy-website-modernizer.md
+cp /path/to/resurface/SKILL.md .cursor/rules/resurface.md
 
 # Windsurf
-cat /path/to/legacy-website-modernizer/SKILL.md >> .windsurfrules
+cat /path/to/resurface/SKILL.md >> .windsurfrules
 ```
 
 ### 4. OpenAI Codex / Custom Agent Harness
-Place `SKILL.md` in your agent's system prompt or workspace context file (`skills/legacy-website-modernizer/SKILL.md`).
+Place `SKILL.md` in your agent's system prompt or workspace context file (`skills/resurface/SKILL.md`).
 
 ---
 
@@ -69,11 +69,11 @@ Place `SKILL.md` in your agent's system prompt or workspace context file (`skill
 
 Once installed, invoke your agent with any of these prompts:
 
-> *"Modernize this legacy portal: `https://portal.mycompany.com`. Use the legacy-website-modernizer skill."*
+> *"Resurface this legacy website: `https://portal.mycompany.com`."*
 
-> *"I have an ugly intranet site at `https://hr.internal`. Crawl it with Obscura, handle the login, and build me a modern Chrome extension overlay."*
+> *"I have an ugly intranet site at `https://hr.internal`. Crawl it with Obscura, map the routes recursively, handle the login, and build me a modern Chrome extension overlay."*
 
-> *"Redesign this legacy ASP.NET website using the SuperFlex WXT/React overlay architecture with zero FOUC."*
+> *"Redesign this legacy ASP.NET website using the Resurface WXT/React overlay architecture with zero FOUC."*
 
 ---
 
