@@ -32,10 +32,25 @@ Most legacy systems (university portals, internal corporate tools, government si
 
 ## Installation Across AI Agents
 
-### 1. Google Antigravity & Gemini CLI
-Clone or symlink into your user skills directory:
+### One-command install (skills CLI / registries)
+
 ```bash
-git clone https://github.com/theajmalrazaq/resurface.git ~/.gemini/config/skills/resurface
+# skills.sh — Vercel skills CLI (Claude Code, Codex, Cursor, and 40+ agents)
+npx skills add theajmalrazaq/resurface
+
+# Claude Code plugin marketplace
+/plugin marketplace add theajmalrazaq/resurface
+/plugin install resurface@resurface
+
+# ClawHub (OpenClaw registry)
+npx clawhub install resurface
+```
+
+### 1. Google Antigravity & Gemini CLI
+The skill lives in `skills/resurface/` inside this repo. Clone and copy it into your user skills directory:
+```bash
+git clone https://github.com/theajmalrazaq/resurface.git
+cp -r resurface/skills/resurface ~/.gemini/config/skills/resurface
 ```
 Antigravity automatically registers the skill upon start.
 
@@ -44,11 +59,11 @@ Symlink into your global or project Claude skills directory:
 ```bash
 # Global installation for all Claude Code sessions:
 mkdir -p ~/.claude/skills
-ln -s /path/to/resurface ~/.claude/skills/resurface
+ln -s /path/to/resurface/skills/resurface ~/.claude/skills/resurface
 
 # Or project-level:
 mkdir -p .claude/skills
-cp /path/to/resurface/SKILL.md .claude/skills/SKILL.md
+cp -r /path/to/resurface/skills/resurface .claude/skills/resurface
 ```
 
 ### 3. Cursor & Windsurf
@@ -56,14 +71,14 @@ Add as a project rule or cursor rule:
 ```bash
 # Cursor
 mkdir -p .cursor/rules
-cp /path/to/resurface/SKILL.md .cursor/rules/resurface.md
+cp /path/to/resurface/skills/resurface/SKILL.md .cursor/rules/resurface.md
 
 # Windsurf
-cat /path/to/resurface/SKILL.md >> .windsurfrules
+cat /path/to/resurface/skills/resurface/SKILL.md >> .windsurfrules
 ```
 
 ### 4. OpenAI Codex / Custom Agent Harness
-Place `SKILL.md` in your agent's system prompt or workspace context file (`skills/resurface/SKILL.md`).
+Place `skills/resurface/SKILL.md` from this repo in your agent's system prompt or workspace context file.
 
 ---
 

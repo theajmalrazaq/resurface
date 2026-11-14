@@ -1,0 +1,22 @@
+{
+  "name": "resurface",
+  "owner": {
+    "name": "Ajmal Razaq",
+    "url": "https://github.com/theajmalrazaq"
+  },
+  "metadata": {
+    "description": "Resurface: reverse-engineer and modernly reskin any legacy website into a 2026-grade Web Extension overlay.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "resurface",
+      "description": "Autonomous agent playbook to crawl, reverse-engineer, and modernly reskin ANY legacy website into a 2026-grade Web Extension overlay (WXT, React 19, Tailwind CSS).",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/resurface"],
+      "category": "development",
+      "homepage": "https://github.com/theajmalrazaq/resurface"
+    }
+  ]
+}

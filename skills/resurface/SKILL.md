@@ -1,5 +1,6 @@
 ---
 name: resurface
+license: MIT
 description: >-
   Autonomous agent playbook to crawl, reverse-engineer, and modernly reskin ANY legacy, outdated, or frustrating website or web portal into a 2026-grade Web Extension overlay (WXT, React 19, Tailwind CSS, Zustand, Zod).
   Enforces stealth browser automation via Obscura (https://github.com/h4ckf0r0day/obscura), recursive whole-site topology mapping, interactive human-in-the-loop CAPTCHA/auth clearance, bulletproof anti-FOUC (Flash of Unstyled Content) engineering, and client-side DOM hijacking without modifying the host backend.
