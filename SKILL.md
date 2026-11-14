@@ -49,27 +49,36 @@ Instead of requiring backend database access or rebuilding server-side APIs, thi
 
 ## 2. Autonomous Execution Phases
 
-### Phase 1: Browser Ingestion via Obscura
+### Phase 1: Two-Tier Ingestion Strategy (Probe vs. Obscura Stealth)
 
-The agent **must exclusively use [Obscura](https://github.com/h4ckf0r0day/obscura)** for all scraping, session persistence, and crawling operations.
+To maximize speed and avoid unnecessary browser overhead, the agent must evaluate the target site with a two-tier strategy:
 
-#### 1. Setup & Installation
-Verify if `obscura` is available locally; if not, install and initialize it immediately:
+#### Tier 1: Fast Probe Heuristic (Public Static Sites)
+Before launching full browser instrumentation, test the target with a lightweight HTTP probe:
 ```bash
+curl -sIL "<TARGET_URL>" | head -n 20
+```
+- **If the site returns HTTP 200 without Cloudflare, Turnstile, reCAPTCHA, or mandatory login walls** (e.g. public portals, corporate brochures, documentation, unauthenticated directories):
+  - Do **NOT** spin up a full browser instance.
+  - Run rapid parallel fetching with `fetch()` and `linkedom` in a temporary script to map and snapshot the entire site topology in seconds.
+
+#### Tier 2: Stealth Browser Engine via Obscura (Auth / Protected / SPA Sites)
+- **If the site returns HTTP 403/401, Cloudflare clearance, interactive login forms, or client-side SPA routing**:
+  - The agent **must exclusively use [Obscura](https://github.com/h4ckf0r0day/obscura)** for session persistence and stealth execution.
+
+```bash
+# Verify or install Obscura
 if ! command -v obscura &> /dev/null; then
   echo "Obscura not found. Installing from source..."
   git clone https://github.com/h4ckf0r0day/obscura.git ~/.obscura
   cd ~/.obscura && bun install || npm install
 fi
-```
 
-#### 2. Launch Stealth Session
-Launch Obscura pointed to the target legacy domain:
-```bash
+# Launch stealth session
 obscura open "<TARGET_URL>" --stealth --persist-cookies
 ```
 
-#### 3. Interactive Human-in-the-Loop Auth Gate
+#### Interactive Human-in-the-Loop Auth Gate
 - **Never attempt to automate, defeat, or spoof CAPTCHAs, biometric challenges, or multi-factor 2FA.**
 - If a login form, Cloudflare Turnstile, reCAPTCHA, hCaptcha, or 2FA prompt is detected:
   1. The agent must pause and notify the user:
@@ -81,11 +90,9 @@ obscura open "<TARGET_URL>" --stealth --persist-cookies
 
 ### Phase 2: Recursive Deep Discovery & Whole-Site Topology Mapping
 
-**MANDATORY RULE:** The agent must map the **entire website topology recursively** before scaffoldings or writing any UI code. A partial redesign leads to broken navigation and fragmented user flows.
+**MANDATORY RULE:** The agent must map the **entire website topology recursively** before scaffolding or writing any UI code. A partial redesign leads to broken navigation and fragmented user flows.
 
-#### 1. Recursive Crawling & Sub-Page Exploration Algorithm
-Start at the post-login landing page and recursively traverse the site graph using Obscura:
-
+#### 1. Recursive Crawling Algorithm
 1. **Breadth-First Exploration Queue:**
    - Initialize `queue = [landingUrl]`, `visited = new Set()`.
    - Constrain all crawling strictly to the same origin (`targetOrigin`).
@@ -123,30 +130,6 @@ Save the complete hierarchical topology so the modern React navigation can be sc
           "type": "tabular",
           "subTabs": ["Quizzes", "Assignments", "Exams"],
           "actions": ["form#download-marksheet"]
-        },
-        {
-          "id": "attendance",
-          "label": "Attendance Register",
-          "path": "/Academics/Attendance",
-          "domSnapshot": "audit/dom/academics-attendance.html",
-          "type": "tabular",
-          "subTabs": ["Daily", "Aggregate"]
-        }
-      ]
-    },
-    {
-      "id": "finance",
-      "label": "Finance & Billing",
-      "icon": "CreditCard",
-      "path": "/Finance",
-      "children": [
-        {
-          "id": "fee-challan",
-          "label": "Invoices & Challans",
-          "path": "/Finance/Invoices",
-          "domSnapshot": "audit/dom/finance-invoices.html",
-          "type": "document-list",
-          "actions": ["form#generate-challan", "input[name='__RequestVerificationToken']"]
         }
       ]
     }
@@ -212,12 +195,12 @@ skeleton.remove();
 ```
 
 #### 4. Stripping Conflicting Legacy Stylesheets
-Legacy websites often bundle outdated frameworks (Bootstrap 2/3, old Metro UI, jQuery UI) that leak through global tags. Identify and eliminate them dynamically:
+Legacy websites often bundle outdated frameworks (Bootstrap 2/3, old Metro UI, Joomla CSS) that leak through global tags. Identify and eliminate them dynamically:
 ```typescript
 const unwantedStyles = [
-  'link[href*="base/style.bundle.css"]',
-  'link[href*="vendors.bundle.css"]',
-  'link[href*="theme-default.css"]',
+  'link[href*="template.css"]',
+  'link[href*="system.css"]',
+  'link[href*="style.bundle.css"]',
 ];
 
 unwantedStyles.forEach((selector) => {
@@ -233,51 +216,172 @@ The legacy DOM must remain alive and accessible in the background so:
 
 ---
 
-### Phase 4: Modern Overlay Implementation (The SuperFlex Tech Stack)
+### Phase 4: Battle-Tested Toolchain & Pinned Dependencies
 
-Initialize the project using WXT + React + Tailwind:
+> [!CAUTION]
+> **VITE 6 & TAILWIND V4 COMPATIBILITY PITFALL:**
+> Do **NOT** install `@tailwindcss/vite` inside WXT projects. It causes Vite pre-bundle optimizer collisions on virtual content script entrypoints (`virtual:wxt-content-script-main-world-entrypoint?`).
+> Do **NOT** let `@wxt-dev/module-react` install loose unpinned nested `@vitejs/plugin-react` dependencies, or it will attempt to import the deprecated `vite/internal` subpath.
+> **Always use `@tailwindcss/postcss` with `postcss.config.ts` and pin `vite@^6.4.5`.**
 
-```bash
-# Initialize WXT React template
-bunx wxt@latest init my-modern-overlay --template react
-cd my-modern-overlay
-
-# Install dependencies
-bun add tailwindcss @tailwindcss/vite clsx tailwind-merge class-variance-authority lucide-react zustand zod
-bun add -d vitest @testing-library/react linkedom
+#### 1. Recommended `package.json` Template
+```json
+{
+  "name": "my-modern-overlay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.487.0",
+    "postcss": "^8.5.6",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tailwind-merge": "^3.7.0",
+    "tailwindcss": "^4.1.13",
+    "zod": "^3.24.2",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.308",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.2.1",
+    "@wxt-dev/module-react": "^1.2.2",
+    "autoprefixer": "^10.4.21",
+    "typescript": "^5.7.3",
+    "vite": "^6.4.5",
+    "wxt": "^0.21.5"
+  }
+}
 ```
 
-#### Directory Structure:
-```text
-src/
-├── entrypoints/
-│   ├── background.ts          # Extension lifecycle & storage management
-│   ├── content.tsx            # Main content script & React root mount
-│   └── bridge.ts              # Window isolation bridge
-├── components/
-│   ├── ui/                    # Modern atoms (Buttons, Cards, Modals, Toasts)
-│   ├── layout/                # Sidebar, Topbar, Breadcrumbs
-│   └── views/                 # Modern views corresponding to legacy routes
-├── parsers/                   # Resilient HTML -> Typed Object parsers
-│   ├── dashboard.ts
-│   └── records.ts
-├── schemas/                   # Zod domain schemas
-│   └── records.ts
-├── stores/                    # Zustand stores for cached data & theme
-│   ├── preferencesStore.ts
-│   └── recordsStore.ts
-├── styles/
-│   ├── tailwind.css           # Modern Tailwind styling & theme tokens
-│   └── loading.css            # Pre-paint loading animations
-└── utils/
-    ├── cn.ts                  # clsx + twMerge utility
-    ├── credentialVault.ts     # AES-GCM local credential encryption
-    └── domHelpers.ts          # Resilient element query helpers
+#### 2. `postcss.config.ts`
+```typescript
+export default {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+```
+
+#### 3. `wxt.config.ts`
+```typescript
+import { defineConfig } from "wxt";
+
+export default defineConfig({
+  srcDir: "src",
+  outDir: "dist",
+  outDirTemplate: "",
+  modules: ["@wxt-dev/module-react"],
+  manifest: {
+    name: "Modern Overlay",
+    description: "2026-grade modern UI overlay",
+    version: "1.0.0",
+    permissions: ["storage"],
+    icons: {
+      16: "icon-16.png",
+      32: "icon-32.png",
+      48: "icon-48.png",
+      128: "icon-128.png",
+    },
+    host_permissions: ["https://<TARGET_DOMAIN>/*"],
+  },
+});
+```
+
+#### 4. Instant 1-Shot Icon Generator
+Every Chrome MV3 extension requires PNG icons. Avoid broken builds by generating them immediately in `public/`:
+```bash
+cat << 'EOF' > public/icon.svg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#g)" />
+  <path d="M40 38h48v12L56 78h32v12H38V78l32-28H40V38z" fill="#ffffff" />
+</svg>
+EOF
+
+for size in 16 32 48 128; do
+  rsvg-convert -w $size -h $size public/icon.svg -o public/icon-$size.png 2>/dev/null || \
+  magick public/icon.svg -resize ${size}x${size} public/icon-$size.png
+done
 ```
 
 ---
 
-### Phase 5: Resilient Semantic Parsers
+### Phase 5: Bulletproof Content Script Boilerplate
+
+Use this standardized, robust pattern in `src/entrypoints/content.tsx`:
+
+```tsx
+import { defineContentScript } from "wxt/utils/define-content-script";
+import { createRoot } from "react-dom/client";
+import { App } from "../components/App";
+import "../styles/tailwind.css";
+
+export default defineContentScript({
+  matches: ["https://<TARGET_DOMAIN>/*"],
+  main() {
+    // 1. Anti-FOUC Gate: Pre-paint Skeleton
+    const skeleton = document.createElement("div");
+    skeleton.id = "app-skeleton";
+    skeleton.innerHTML = `
+      <div style="height: 64px; background: #fff; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; padding: 0 24px;">
+        <div style="width: 120px; height: 24px; background: #e2e8f0; border-radius: 6px;"></div>
+      </div>
+      <div style="max-width: 1200px; margin: 32px auto; padding: 0 24px;">
+        <div style="height: 380px; background: #fff; border-radius: 16px; border: 1px solid #e2e8f0;"></div>
+      </div>
+    `;
+    document.documentElement.appendChild(skeleton);
+
+    // 2. Dynamic Legacy Stylesheet Stripper
+    const stripLegacyCss = () => {
+      document.querySelectorAll<HTMLLinkElement>(
+        'link[href*="template.css"], link[href*="system.css"], link[href*="general.css"]'
+      ).forEach((el) => el.remove());
+    };
+    stripLegacyCss();
+    document.addEventListener("DOMContentLoaded", stripLegacyCss);
+
+    // 3. React Mount Handler
+    const onReady = () => {
+      let rootContainer = document.getElementById("modern-app-root");
+      if (!rootContainer) {
+        rootContainer = document.createElement("div");
+        rootContainer.id = "modern-app-root";
+        document.body.insertBefore(rootContainer, document.body.firstChild);
+      }
+
+      const root = createRoot(rootContainer);
+      root.render(<App />);
+
+      setTimeout(() => skeleton.remove(), 50);
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", onReady, { once: true });
+    } else {
+      onReady();
+    }
+  },
+});
+```
+
+---
+
+### Phase 6: Resilient Semantic Parsers
 
 Legacy sites often use unsemantic `<table>` layouts without classes or IDs. Parsers must be resilient against minor layout changes.
 
@@ -325,7 +429,7 @@ export function parseInvoicesTable(doc: Document | Element): InvoiceItem[] {
 
 ---
 
-### Phase 6: Form & Action Proxying
+### Phase 7: Form & Action Proxying
 
 When a user submits a modern form or clicks an action button (e.g., "Download Statement", "Submit Timesheet"):
 
@@ -361,8 +465,10 @@ export function proxyLegacyFormSubmit(formSelector: string, fieldValues: Record<
 
 ## 3. Quality Gates & Verification Checklist
 
-- [ ] **Stealth Verification:** Target crawled strictly via `obscura` with clean cookie capture.
+- [ ] **Stealth Verification:** Target crawled via two-tier strategy (lightweight probe or Obscura) with clean cookie capture.
 - [ ] **Zero FOUC:** No visual glitch or flash of the legacy page on fast or slow refresh.
+- [ ] **Pinned Toolchain:** Extension built using pinned `vite@^6.4.5`, `@tailwindcss/postcss`, and `wxt@^0.21.5` without virtual entrypoint collisions.
+- [ ] **Asset Completeness:** PNG icons (16, 32, 48, 128px) generated and referenced in `wxt.config.ts`.
 - [ ] **Data Integrity:** 100% of data values match the legacy portal (verified with snapshot unit tests in Vitest).
 - [ ] **Native Sessions Preserved:** Navigating routes does not invalidate authentication or drop cookies.
 - [ ] **Fallback Toggle:** User can switch back to the "Original View" anytime with a persistent setting toggle.
