@@ -19,6 +19,7 @@ Most legacy systems (university portals, internal corporate tools, government si
 ## Key Capabilities
 
 - 🕶️ **Exclusive Stealth Crawling via Obscura:** Uses [Obscura](https://github.com/h4ckf0r0day/obscura) to bypass anti-bot detections, capture authenticated DOM trees, and catalog routes.
+- 🗺️ **Recursive Whole-Site Graph Mapping:** Recursively crawls navbar dropdowns, sidebar accordions, secondary/tertiary tabs, and sub-pages to build a complete `audit/site-graph.json` before writing a single line of UI code.
 - 🛑 **Interactive Human-in-the-Loop Auth Gate:** Safely pauses for human CAPTCHA solving (Turnstile, reCAPTCHA, hCaptcha) or 2FA without attempting illegal bypasses.
 - ⚡ **Zero-FOUC (Flash of Unstyled Content) Guarantee:** Enforces 5-layer anti-FOUC pre-paint suppression, loading skeletons, and legacy stylesheet removal.
 - 🧩 **Resilient Semantic Parsers:** Extracts tables, forms, and alerts using header-anchored semantic lookups validated with Zod schemas.

@@ -79,37 +79,82 @@ obscura open "<TARGET_URL>" --stealth --persist-cookies
 
 ---
 
-### Phase 2: Autonomous DOM Audit & Route Cataloging
+### Phase 2: Recursive Deep Discovery & Whole-Site Topology Mapping
 
-1. **Crawl & Catalog Every Accessible Route:**
-   - Use Obscura to navigate each primary and secondary navigation link.
-   - For every distinct page:
-     - Record URL path pattern (e.g. `/Portal/Dashboard`, `/Billing/History`, `/Records/View`).
-     - Save full rendered DOM snapshot to `audit/dom/<page_slug>.html`.
-     - Capture network requests (AJAX/Fetch endpoints, form actions, hidden tokens like `__VIEWSTATE` or `__RequestVerificationToken`).
-2. **Generate `audit/manifest.json`:**
-   ```json
-   {
-     "targetOrigin": "https://legacy-site.example.com",
-     "routes": [
-       {
-         "name": "Dashboard",
-         "path": "/Dashboard",
-         "type": "summary",
-         "domSnapshot": "audit/dom/dashboard.html",
-         "keyElements": ["#welcome-box", "table.stats-summary"]
-       },
-       {
-         "name": "Invoices",
-         "path": "/Invoices/List",
-         "type": "tabular",
-         "domSnapshot": "audit/dom/invoices.html",
-         "keyElements": ["table#grid-data", "select#status-filter"],
-         "actions": ["form#download-pdf", "input[name='__RequestVerificationToken']"]
-       }
-     ]
-   }
-   ```
+**MANDATORY RULE:** The agent must map the **entire website topology recursively** before scaffoldings or writing any UI code. A partial redesign leads to broken navigation and fragmented user flows.
+
+#### 1. Recursive Crawling & Sub-Page Exploration Algorithm
+Start at the post-login landing page and recursively traverse the site graph using Obscura:
+
+1. **Breadth-First Exploration Queue:**
+   - Initialize `queue = [landingUrl]`, `visited = new Set()`.
+   - Constrain all crawling strictly to the same origin (`targetOrigin`).
+2. **Multi-Level Navigation Discovery:**
+   - **Primary Nav:** Top bar items, brand links, and main menu bars.
+   - **Nested Dropdowns & Flyouts:** Trigger hover/click states on menu buttons (`[data-toggle="dropdown"]`, `.dropdown-toggle`, `li.has-submenu`) to expose and capture sub-menu links.
+   - **Sidebar Accordions:** Expand all collapsed tree views and sidebar groups.
+   - **Secondary & Tertiary Tabs:** Click across tab headers (`[role="tab"]`, `.nav-tabs a`, `.tab-header`) on every visited page to load and snapshot sub-views.
+   - **Nested Detail Links:** Detect tabular links (e.g., clicking on an invoice row `<td><a href="/Invoice/1234">` or a student semester link) to catalog detail view templates.
+3. **Canonicalization & Loop Prevention:**
+   - Normalize paths by stripping ephemeral query params (`?session_id=`, `?_t=`, cache busters) while preserving structural state params (`?id=`, `?tab=`, `?year=`).
+   - Stop recursion when depth exceeds maximum configured threshold (default: 4 levels deep) or when all same-origin links in the visited set have been exhausted.
+
+#### 2. Artifact Generation: `audit/site-graph.json` & `audit/manifest.json`
+
+Save the complete hierarchical topology so the modern React navigation can be scaffolded with 100% route coverage:
+
+```json
+{
+  "targetOrigin": "https://legacy-site.example.com",
+  "generatedAt": "2026-11-14T21:45:00Z",
+  "totalRoutes": 24,
+  "routeTree": [
+    {
+      "id": "academics",
+      "label": "Academics",
+      "icon": "GraduationCap",
+      "path": "/Academics",
+      "children": [
+        {
+          "id": "marks",
+          "label": "Marks & Assessment",
+          "path": "/Academics/Marks",
+          "domSnapshot": "audit/dom/academics-marks.html",
+          "type": "tabular",
+          "subTabs": ["Quizzes", "Assignments", "Exams"],
+          "actions": ["form#download-marksheet"]
+        },
+        {
+          "id": "attendance",
+          "label": "Attendance Register",
+          "path": "/Academics/Attendance",
+          "domSnapshot": "audit/dom/academics-attendance.html",
+          "type": "tabular",
+          "subTabs": ["Daily", "Aggregate"]
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "label": "Finance & Billing",
+      "icon": "CreditCard",
+      "path": "/Finance",
+      "children": [
+        {
+          "id": "fee-challan",
+          "label": "Invoices & Challans",
+          "path": "/Finance/Invoices",
+          "domSnapshot": "audit/dom/finance-invoices.html",
+          "type": "document-list",
+          "actions": ["form#generate-challan", "input[name='__RequestVerificationToken']"]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Every discovered page must have its complete DOM tree saved under `audit/dom/<slug>.html` for offline test development and resilient selector engineering.
 
 ---
 
