@@ -67,6 +67,7 @@ npx skills add theajmalrazaq/resurface
 **Published on:**
 - [skills.sh](https://skills.sh/theajmalrazaq/resurface/resurface) — install with `npx skills add theajmalrazaq/resurface`
 - [GitHub Releases](https://github.com/theajmalrazaq/resurface/releases/tag/v1.0.0) — `v1.0.0`, install with `gh skill install theajmalrazaq/resurface`
+- [ClawHub](https://clawhub.ai/theajmalrazaq/skills/resurface) — install with `openclaw skills install @theajmalrazaq/resurface`
 - Agensi — free listing (in review)
 - SkillsMP and ClaudeSkills — auto-indexed from this public repo
 
