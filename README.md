@@ -68,7 +68,7 @@ npx skills add theajmalrazaq/resurface
 - [skills.sh](https://skills.sh/theajmalrazaq/resurface/resurface) — install with `npx skills add theajmalrazaq/resurface`
 - [GitHub Releases](https://github.com/theajmalrazaq/resurface/releases/tag/v1.0.0) — `v1.0.0`, install with `gh skill install theajmalrazaq/resurface`
 - [ClawHub](https://clawhub.ai/theajmalrazaq/skills/resurface) — install with `openclaw skills install @theajmalrazaq/resurface`
-- Agensi — free listing (in review)
+- [Agensi](https://www.agensi.io/skills/resurface) — free listing, live
 - SkillsMP and ClaudeSkills — auto-indexed from this public repo
 
 ### 1. Google Antigravity & Gemini CLI
